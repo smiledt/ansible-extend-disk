@@ -6,7 +6,7 @@ Extends the disk of a linux lvm when there is available, unallocated disk space.
 Requirements
 ------------
 
-There must be unallocated disk space available on the system.
+This role relies on the community.general collection. There must be unallocated disk space available on the system.
 
 Role Variables
 --------------
