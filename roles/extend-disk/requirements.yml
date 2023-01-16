@@ -2,4 +2,4 @@
 # Requirements file for Extend-Disk
 
 # From galaxy
-- src: community.general.parted
+- src: community.general
