@@ -30,7 +30,7 @@
     part_end: "100%"
     part_start: "{{ (disk_info.partitions | last).end + 1}}MiB" 
 
-- name: "Add device to exising volume group {{ volume_group }}."
+- name: Add device to exising volume group {{ volume_group }}
   lvg:
     vg: "{{ volume_group }}"
     pvs: "{{ disk }}{{ disk_info.partitions | length }},{{ disk }}{{ disk_info.partitions | length + 1 }}"
