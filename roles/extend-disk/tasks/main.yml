@@ -1,0 +1,21 @@
+---
+# tasks file for extend-disk
+
+- name: Read device information (always use unit when probing)
+  community.general.parted: 
+    device: "{{ disk }}"
+    unit: MiB
+  register: disk_info
+
+- name: Print return information from the previous task
+  ansible.builtin.debug:
+    var: disk_info
+    verbosity: 2
+
+- name: Extend the existing partition to fill all available space
+  community.general.parted:
+    device: "{{ disk }}"
+    number: "{{ disk_info.partitions | length }}"
+    part_end: "100%"
+    resize: true
+    state: present

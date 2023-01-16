@@ -1,0 +1,7 @@
+---
+# The main playbook file for the extend-disk role.
+
+- name: Extend the disk to all available space.
+  hosts: all
+  roles:
+    - extend-disk
