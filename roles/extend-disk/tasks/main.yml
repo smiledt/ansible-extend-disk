@@ -22,17 +22,7 @@
     state: present
     resize: true
 
-# - name: Add new partition to {{ disk }}
-#   parted:
-#     device: "{{ disk }}"
-#     number: "{{ disk_info.partitions | length + 1 }}"
-#     part_type: primary
-#     flags: [ lvm ]
-#     state: present
-#     part_end: "100%"
-#     part_start: "{{ (disk_info.partitions | last).end + 1}}MiB" 
-
-# - name: Add device to exising volume group {{ volume_group }}
-#   lvg:
-#     vg: "{{ volume_group }}"
-#     pvs: "{{ disk }}{{ disk_info.partitions | length }},{{ disk }}{{ disk_info.partitions | length + 1 }}"
+- name: Extend the LVM to the 
+  lvg:
+    vg: "{{ volume_group }}"
+    pvresize: true
