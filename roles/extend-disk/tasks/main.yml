@@ -2,7 +2,7 @@
 # tasks file for extend-disk
 
 - name: Read device information (always use unit when probing)
-  parted: 
+  community.general.parted: 
     device: "{{ disk }}"
     unit: MiB
   register: disk_info
