@@ -13,7 +13,7 @@
     verbosity: 2
 
 - name: Extend the existing partition to fill all available space
-  parted:
+  community.general.parted:
     device: "{{ disk }}"
     number: "{{ disk_info.partitions | length }}"
     label: gpt
