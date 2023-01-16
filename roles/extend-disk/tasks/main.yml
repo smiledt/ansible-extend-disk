@@ -19,8 +19,8 @@
     label: gpt
     unit: MiB
     part_end: "100%"
-    resize: true
     state: present
+    resize: true
 
 # - name: Add new partition to {{ disk }}
 #   parted:
