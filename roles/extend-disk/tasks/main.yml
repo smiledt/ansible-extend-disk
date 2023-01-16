@@ -22,11 +22,11 @@
     state: present
     resize: true
 
-# - name: Extend the LVM to the new space on {{ disk }}
-#   community.general.lvg:
-#     vg: "{{ volume_group }}"
-#     pvs: "{{ disk }}{{ disk_info.partitions | length }}"
-#     pvresize: true
+- name: Extend the LVM to the new space on {{ disk }}
+  community.general.lvg:
+    vg: "{{ volume_group }}"
+    pvs: "{{ disk }}{{ disk_info.partitions | length }}"
+    pvresize: true
 
 - name: Extend the logical volume to take all remaining space and resize the underlying filesystem
   community.general.lvol:
