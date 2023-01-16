@@ -28,7 +28,7 @@
     flags: [ lvm ]
     state: present
     part_end: "100%"
-    part_start: "{{ (device_info.partitions | last).end + 1}}MiB" 
+    part_start: "{{ (disk_info.partitions | last).end + 1}}MiB" 
 
 - name: "Add device to exising volume group {{ volume_group }}."
   lvg:
