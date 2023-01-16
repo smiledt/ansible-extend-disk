@@ -12,10 +12,25 @@
     var: disk_info
     verbosity: 2
 
-- name: Extend the existing partition to fill all available space
+# - name: Extend the existing partition to fill all available space
+#   parted:
+#     device: "{{ disk }}"
+#     number: "{{ disk_info.partitions | length }}"
+#     part_end: "100%"
+#     resize: true
+#     state: present
+
+- name: Add new partition to {{ disk }}
   parted:
     device: "{{ disk }}"
-    number: "{{ disk_info.partitions | length }}"
-    part_end: "100%"
-    resize: true
+    number: "{{ disk_info.partitions | length + 1 }}"
+    part_type: primary
+    flags: [ lvm ]
     state: present
+    part_end: "100%"
+    part_start: "{{ (device_info.partitions | last).end + 1}}MiB" 
+
+- name: "Add device to exising volume group {{ volume_group }}."
+  lvg:
+    vg: "{{ volume_group }}"
+    pvs: "{{ disk }}{{ disk_info.partitions | length }},{{ disk }}{{ disk_info.partitions | length + 1 }}"
