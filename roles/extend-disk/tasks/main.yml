@@ -25,4 +25,5 @@
 - name: Extend the LVM to the 
   community.general.lvg:
     vg: "{{ volume_group }}"
+    pvs: "{{ disk }}{{ disk_info.partitions | length }}"
     pvresize: true
