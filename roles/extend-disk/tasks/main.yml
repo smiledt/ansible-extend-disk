@@ -23,6 +23,6 @@
     resize: true
 
 - name: Extend the LVM to the 
-  lvg:
+  community.general.lvg:
     vg: "{{ volume_group }}"
     pvresize: true
