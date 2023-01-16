@@ -11,13 +11,28 @@ This role relies on the community.general collection. There must be unallocated 
 Role Variables
 --------------
 
-Coming soon
+Role variables and their defaults are listed below.
+
+    disk: /dev/sda
+
+The disk to be extended.
+
+    volume_group: ubuntu-vg
+
+The volume group to be extended over the new disk space.
+
+    logical_volume: ubuntu-lv
+
+The logical volume to be extended.
 
 Example Playbook
 ----------------
 
-Coming soon
-
+    - name: Extend the disk to all available space.
+      hosts: all
+      become: true
+      roles:
+        - extend-disk
 License
 -------
 

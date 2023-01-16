@@ -3,3 +3,4 @@
 
 disk: /dev/sda
 volume_group: ubuntu-vg
+logical_volume: ubuntu-lv
