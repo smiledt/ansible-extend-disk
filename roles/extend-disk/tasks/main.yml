@@ -30,7 +30,7 @@
 
 - name: Extend the logical volume to take all remaining space and resize the underlying filesystem
   community.general.lvol:
-    vg: "{{ ubuntu-vg }}"
-    lv: "{{ ubuntu-lv }}"
+    vg: "{{ volume_group }}"
+    lv: "{{ logical_volume }}"
     size: +100%FREE
     resizefs: true
