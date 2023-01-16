@@ -3,5 +3,6 @@
 
 - name: Extend the disk to all available space.
   hosts: all
+  become: true
   roles:
     - extend-disk
