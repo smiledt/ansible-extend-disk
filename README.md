@@ -11,19 +11,17 @@ This role relies on the community.general collection. There must be unallocated 
 Role Variables
 --------------
 
-Role variables and their defaults are listed below.
+None. The role discovers everything it needs from gathered facts:
 
-    disk: /dev/sda
+1. Finds the device mounted at `/` and matches it to a logical volume in the LVM facts, giving `volume_group` and `logical_volume`.
+2. Finds the physical volume backing that volume group (the role fails if the VG spans more than one PV, since the disk to extend would be ambiguous).
+3. Derives `disk` and the partition number from the PV path (e.g. `/dev/sda3` → `/dev/sda` partition 3, `/dev/nvme0n1p3` → `/dev/nvme0n1` partition 3).
 
-The disk to be extended.
+On MBR (msdos) disks where the PV is a logical partition (number 5+, the
+default Debian layout), the role grows the extended container partition to the
+end of the disk before growing the PV partition itself.
 
-    volume_group: ubuntu-vg
-
-The volume group to be extended over the new disk space.
-
-    logical_volume: ubuntu-lv
-
-The logical volume to be extended.
+The root filesystem must be on LVM, and fact gathering must be enabled.
 
 Example Playbook
 ----------------

@@ -1,22 +1,114 @@
 ---
 # tasks file for extend-disk
 
+- name: Locate the device backing the root filesystem
+  ansible.builtin.set_fact:
+    root_device: "{{ (ansible_facts.mounts | selectattr('mount', 'equalto', '/') | first).device }}"
+
+- name: Ensure LVM facts were gathered
+  ansible.builtin.assert:
+    that:
+      - ansible_facts.lvm is defined
+      - ansible_facts.lvm.lvs is defined
+      - ansible_facts.lvm.pvs is defined
+    fail_msg: "No LVM facts available on this host - is LVM installed and the play running with become?"
+
+- name: Identify the volume group and logical volume backing the root filesystem
+  ansible.builtin.set_fact:
+    volume_group: "{{ item.value.vg }}"
+    logical_volume: "{{ item.key }}"
+  loop: "{{ ansible_facts.lvm.lvs | dict2items }}"
+  when: >-
+    root_device in [
+      '/dev/mapper/' ~ (item.value.vg | replace('-', '--')) ~ '-' ~ (item.key | replace('-', '--')),
+      '/dev/' ~ item.value.vg ~ '/' ~ item.key
+    ]
+
+- name: Ensure the root filesystem was matched to a logical volume
+  ansible.builtin.assert:
+    that:
+      - volume_group is defined
+      - logical_volume is defined
+    fail_msg: "Could not match root device {{ root_device }} to an LVM logical volume - is / on LVM?"
+
+- name: Find the physical volumes belonging to the root volume group
+  ansible.builtin.set_fact:
+    volume_group_pvs: >-
+      {{ ansible_facts.lvm.pvs | dict2items
+         | selectattr('value.vg', 'equalto', volume_group)
+         | map(attribute='key') | list }}
+
+- name: Ensure the volume group sits on exactly one physical volume
+  ansible.builtin.assert:
+    that:
+      - volume_group_pvs | length == 1
+    fail_msg: >-
+      Expected exactly one physical volume in {{ volume_group }} but found
+      {{ volume_group_pvs }} - cannot determine which disk to extend.
+
+- name: Derive the OS disk and partition number from the physical volume
+  ansible.builtin.set_fact:
+    physical_volume: "{{ volume_group_pvs | first }}"
+    disk: "{{ volume_group_pvs | first | regex_replace('p?[0-9]+$', '') }}"
+    partition_number: "{{ volume_group_pvs | first | regex_search('[0-9]+$') }}"
+
+- name: Show what will be extended
+  ansible.builtin.debug:
+    msg: >-
+      Extending partition {{ partition_number }} of {{ disk }}
+      (PV {{ physical_volume }}), then LV {{ logical_volume }}
+      in VG {{ volume_group }}.
+
 - name: Read device information (always use unit when probing)
-  community.general.parted: 
+  community.general.parted:
     device: "{{ disk }}"
     unit: MiB
   register: disk_info
 
 - name: Print return information from the previous task
-  debug:
+  ansible.builtin.debug:
     var: disk_info
     verbosity: 2
+
+# On msdos (MBR) disks, partition numbers 5+ are logical partitions living
+# inside an extended container partition. The container must be grown to the
+# end of the disk first, or resizing the logical partition fails with
+# "Can't have overlapping partitions".
+- name: Locate the geometry of the physical volume's partition
+  ansible.builtin.set_fact:
+    pv_partition: >-
+      {{ disk_info.partitions
+         | selectattr('num', 'equalto', partition_number | int)
+         | first }}
+
+- name: Find the extended partition containing the logical PV partition
+  ansible.builtin.set_fact:
+    extended_partition_number: >-
+      {{ disk_info.partitions
+         | selectattr('num', 'le', 4)
+         | selectattr('begin', 'le', pv_partition.begin)
+         | selectattr('end', 'ge', pv_partition.begin)
+         | map(attribute='num') | first }}
+  when:
+    - disk_info.disk.table == 'msdos'
+    - partition_number | int >= 5
+
+- name: Extend the extended partition to fill all available space
+  community.general.parted:
+    device: "{{ disk }}"
+    number: "{{ extended_partition_number }}"
+    label: "{{ disk_info.disk.table }}"
+    unit: MiB
+    part_end: "100%"
+    state: present
+    resize: true
+  when: extended_partition_number is defined
 
 - name: Extend the existing partition to fill all available space
   community.general.parted:
     device: "{{ disk }}"
-    number: "{{ disk_info.partitions | length }}"
-    label: gpt
+    number: "{{ partition_number }}"
+    label: "{{ disk_info.disk.table }}"
     unit: MiB
     part_end: "100%"
     state: present
@@ -25,7 +117,7 @@
 - name: Extend the LVM to the new space on {{ disk }}
   community.general.lvg:
     vg: "{{ volume_group }}"
-    pvs: "{{ disk }}{{ disk_info.partitions | length }}"
+    pvs: "{{ physical_volume }}"
     pvresize: true
 
 - name: Extend the logical volume to take all remaining space and resize the underlying filesystem

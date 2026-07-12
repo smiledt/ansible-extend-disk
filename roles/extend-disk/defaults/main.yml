@@ -1,6 +1,5 @@
 ---
 # defaults file for extend-disk
-
-disk: /dev/sda
-volume_group: ubuntu-vg
-logical_volume: ubuntu-lv
+#
+# No defaults needed: the disk, partition number, volume group, and logical
+# volume are all discovered at runtime from the filesystem mounted at /.
